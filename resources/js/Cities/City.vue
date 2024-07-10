@@ -1,20 +1,19 @@
 <template>
     <div class="row col-md-12">
         <div class="d-flex justify-content-between my-2">
-
-        <div class="form-group">
-            <input
-                class="form-control"
-                type="search"
-                placeholder="Search here ..."
-                aria-label="Search"
-                v-model="search"
-                @input="this.fetchAll"
-            />
-        </div>
-        <RouterLink to="/addcity" type="button" class="btn btn-warning">
-            Add New City
-        </RouterLink>
+            <div class="form-group">
+                <input
+                    class="form-control"
+                    type="search"
+                    placeholder="Search here ..."
+                    aria-label="Search"
+                     v-model="searchQuery"
+                    @input="updateURL"
+                />
+            </div>
+            <RouterLink to="/addcity" type="button" class="btn btn-warning">
+                {{$t("Add New City")}}
+            </RouterLink>
         </div>
     </div>
     <div class="row">
@@ -23,7 +22,7 @@
                 <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
-                            <h4 class="card-title">All Cities</h4>
+                            <h4 class="card-title">{{$t("All Cities")}}</h4>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -32,15 +31,49 @@
                                 >
                                     <thead>
                                         <tr>
-                                            <th>#ID</th>
+                                            <th @click="toggleSort('id')">
+                                                <span>{{$t("ID")}}</span>
+                                                <i
+                                                    v-if="sortField === 'id'"
+                                                    class="fa-solid"
+                                                    :class="
+                                                        sortDirection === 'DESC'
+                                                            ? 'fa-sort-down'
+                                                            : 'fa-sort-up'
+                                                    "
+                                                ></i>
 
-                                            <th>City</th>
-                                            <th>State</th>
+                                            </th>
+
+                                            <th @click="toggleSort('name')">
+                                                <span>{{$t("City")}}</span>
+                                                <i
+                                                    v-if="sortField === 'name'"
+                                                    class="fa-solid"
+                                                    :class="
+                                                        sortDirection === 'DESC'
+                                                            ? 'fa-sort-down'
+                                                            : 'fa-sort-up'
+                                                    "
+                                                ></i>
+                                            </th>
+                                            <th @click="toggleSort('state_name')">
+                                                <span>{{$t("State")}}</span>
+                                                <i
+                                                    v-if="sortField === 'state_name'"
+                                                    class="fa-solid"
+                                                    :class="
+                                                        sortDirection === 'DESC'
+                                                            ? 'fa-sort-down'
+                                                            : 'fa-sort-up'
+                                                    "
+                                                ></i>
+                                            </th>
                                         </tr>
                                     </thead>
 
-                                    <tbody v-if="lists.length > 0">
-                                        <tr v-for="i in lists" :key="i.id">
+                                    <tbody v-if="lists?.data?.length > 0">
+                                        <tr v-for="i in lists.data" :key="i.id">
                                             <td>{{ i.id }}</td>
                                             <td>{{ i.name }}</td>
                                             <td>{{ i.state.name }}</td>
@@ -49,9 +82,7 @@
                                                     <span class="mx-2">
                                                         <Button
                                                             @click="
-                                                                deleteCity(
-                                                                    i.id
-                                                                )
+                                                                deleteCity(i.id)
                                                             "
                                                             name="Delete"
                                                             color="danger"
@@ -69,7 +100,7 @@
                                                             type="button"
                                                             class="btn btn-warning"
                                                         >
-                                                            Update
+                                                            {{$t("Update")}}
                                                         </RouterLink>
                                                     </span>
                                                 </div>
@@ -82,6 +113,17 @@
                                         </div>
                                     </tbody>
                                 </table>
+                                <div>
+                                    <Paginator
+                                        @next="fetchNextPage"
+                                        @prev="fetchPrevPage"
+                                        :from="this.from"
+                                        :to="this.to"
+                                        :total="this.total"
+                                        :nextPage="this.next"
+                                        :prevPage="this.prev"
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -96,6 +138,8 @@ import axios from "axios";
 import Button from "../components/Button.vue";
 import LinkComponent from "../components/LinkComponent.vue";
 import Swal from "sweetalert2";
+import Paginator from "../components/Paginator.vue";
+
 export default {
     data() {
         return {
@@ -110,21 +154,79 @@ export default {
             lists: [],
             temp_id: null,
             isEditting: false,
+            page: 1,
+            sortField: "id",
+            sortDirection: "DESC",
+            next: "",
+            prev: "",
+            from: "",
+            to: "",
+            total: "",
+            searchQuery: this.$route.query.search || "",
+
         };
     },
     components: {
         LinkComponent,
         Button,
+        Paginator,
     },
     mounted() {
         this.fetchAll();
     },
+    watch: {
+        "$route.query": {
+            handler(newQuery) {
+                this.searchQuery = newQuery.search || "";
+
+                this.fetchAll();
+            },
+            immediate: true,
+        },
+    },
 
     methods: {
-        fetchAll() {
-            axios
-                .get("/api/city", { params: { search: this.search } })
-                .then((res) => (this.lists = res.data));
+        fetchNextPage() {
+            this.page++;
+            this.fetchAll();
+        },
+        fetchPrevPage() {
+            this.page--;
+            this.fetchAll();
+        },
+        updateURL() {
+            const query = {
+                search: this.searchQuery,
+                page: this.page,
+            };
+
+            this.$router.push({ query });
+        },
+        toggleSort(sortField) {
+            if (this.sortDirection === "ASC") {
+                (this.sortField = sortField), (this.sortDirection = "DESC");
+            } else {
+                this.sortField = sortField;
+                this.sortDirection = "ASC";
+
+            }
+            this.fetchAll();
+        },
+        fetchAll(url = null) {
+            let fetchUrl = url || "/api/city";
+            const params = {
+                search: this.searchQuery,
+                // Pagination: !this.Pagination,
+                sortField: this.sortField,
+                sortDirection: this.sortDirection,
+            };
+            axios.get(fetchUrl, { params }).then((res) => {
+                (this.lists = res.data), (this.next = this.lists.links.next);
+                this.prev = this.lists.links.prev;
+                this.from = this.lists.meta.from;
+                this.to = this.lists.meta.to;
+                this.total = this.lists.meta.total;
+            });
         },
         deleteCity(id) {
             Swal.fire({
@@ -137,17 +239,33 @@ export default {
                 confirmButtonText: "Yes, delete it!",
             }).then((result) => {
                 if (result.isConfirmed) {
-                    axios
-                        .delete(`/api/city/${id}`)
-                        .then((res) => this.fetchAll());
+                    axios.delete(`/api/city/${id}`).then((res) => {
+                        if (res.status === 204) {
+                            Swal.fire({
+                                timer: 1000,
 
-                    Swal.fire({
-                        timer: 1000,
+                                title: "Deleted!",
+                                text: "Your file has been deleted.",
+                                icon: "success",
+                            });
+                            this.fetchAll();
+                        } else {
+                            Swal.fire({
+                                title: "Error!",
+                                text: "Failed to delete country.",
+                                icon: "error",
+                            });
+                        }
+                    }).catch ((error)=> {
+                        Swal.fire({
+                            timer: 2000,
 
-                        title: "Deleted!",
-                        text: "Your file has been deleted.",
-                        icon: "success",
+                        title: "Error!",
+                        text: "Related data available with this Country",
+                        icon: "error"
                     });
+                    console.log(error);
+                 })
                 }
             });
         },

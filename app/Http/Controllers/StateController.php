@@ -3,8 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StateRequest;
-use App\Http\Requests\StoreStateRequest;
-use App\Http\Requests\UpdateStateRequest;
+use App\Http\Resources\StateResource;
 use App\Models\State;
 use Illuminate\Http\Request;
 
@@ -17,31 +16,54 @@ class StateController extends Controller
     {
         $search = $req->search;
         $country_id = $req->country_id;
-        $state = state::with('country');
+        $state = state::with(['country' => function ($query) {
+            $query->addSelect(['id', 'name']);
+        },]);
+        $sortField = $req->sortField?? 'id';
+        $sortDirection = $req->sortDirection?? 'asc';
+        $Pagination = $req->Pagination;
+        if ($Pagination) {
+
+
+            $stateData = $state->orderBy($sortField, $sortDirection)->get();
+            return StateResource::collection($stateData);
+        }
         if ($search != '') {
 
 
-            return $state->where('name', 'LIKE', "%$search%")->orWhere('id', 'LIKE', "%$search%")->get();;
+            $stateData = $state->where('name', 'LIKE', "%$search%")->orWhere('id', 'LIKE', "%$search%")->paginate(4);
+            return StateResource::collection($stateData);
+        } elseif ($country_id != '') {
+
+
+            $stateData = $state->orWhere('country_id', 'LIKE', "$country_id")->get();;
+            return StateResource::collection($stateData);
         }
-        elseif ($country_id != '') {
-
-
-            return $state->orWhere('country_id', 'LIKE', "%$country_id%")->get();;
+        else if ($sortField === 'country_name') {
+            $stateData = $state->join('countries', 'states.country_id', '=', 'countries.id')
+            ->orderBy('countries.name', $sortDirection)
+            ->select('states.*');
         }
         else {
 
-           return $state->orderBy('id', 'DESC')->get();
+            $stateData = $state->orderBy($sortField, $sortDirection);
         }
+        $stateData = $state->paginate(4)->appends([
+            'sortField' => $sortField,
+            'sortDirection' => $sortDirection,
+            'search' => $search,
+        ]);
+        return StateResource::collection($stateData);
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreStateRequest $request)
+    public function store(StateRequest $request)
     {
         State::create([
             'name' => $request->name,
-            'country_id'=>$request->country_id
+            'country_id' => $request->country_id
         ]);
 
 
@@ -53,19 +75,20 @@ class StateController extends Controller
      */
     public function show(State $State)
     {
-        $stateData= state::with('country');
-        return  $stateData->find($State);
+
+        $stateData =  state::with('country')->find($State->id);
+        return new StateResource($stateData);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateStateRequest $request, State $state)
+    public function update(StateRequest $request, State $state)
     {
 
         $state->update([
             'name' => $request->name,
-            'country_id'=>$request->country_id
+            'country_id' => $request->country_id
         ]);
         return response("status", 200);
     }
@@ -75,9 +98,12 @@ class StateController extends Controller
      */
     public function destroy(State $state)
     {
+        if ($state->city()->count() > 0) {
+            return response('Cannot delete city', 400);
+        } else {
 
-
-        $state->delete();
-        return response("status", 204);
+            $state->delete();
+            return response("status", 204);
+        }
     }
 }

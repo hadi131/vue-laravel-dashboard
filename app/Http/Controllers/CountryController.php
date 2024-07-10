@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+// use App\Http\Requests\CountryRequest;
+
 use App\Http\Requests\CountryRequest;
-use App\Http\Requests\StoreCountryRequest;
-use App\Http\Requests\UpdateCountryRequest;
+
+use App\Http\Resources\CountryResource;
 use App\Models\Country;
 use Illuminate\Http\Request;
 
@@ -16,20 +18,35 @@ class CountryController extends Controller
     public function index(Request $req)
     {
         $search = $req->search;
+        $Pagination = $req->Pagination;
+        $sortField = $req->sortField;
+        $sortDirection = $req->sortDirection;
+        if ($Pagination) {
+
+
+            $countryData= Country::orderBy($sortField, $sortDirection)->get();
+            return CountryResource::collection($countryData);
+
+        }
         if ($search != '') {
 
 
-            return Country::where('name', 'LIKE', "%$search%")->orWhere('id', 'LIKE', "%$search%")->get();;
-        } else {
+            $countryData= Country::where('name', 'LIKE', "%$search%")->orWhere('id', 'LIKE', "%$search%")->paginate(4);
+            return CountryResource::collection($countryData);
 
-           return Country::orderBy('id', 'DESC')->get();
+        }
+        else {
+
+            $countryData= Country::orderBy($sortField, $sortDirection)->paginate(4);
+            return CountryResource::collection($countryData);
+
         }
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreCountryRequest $request)
+    public function store(CountryRequest $request)
     {
 
         Country::create([
@@ -45,13 +62,16 @@ class CountryController extends Controller
      */
     public function show(Country $country)
     {
-        return Country::find($country);
+
+        // $countryData= Country::findOrFail($country->id);
+        // return CountryResource::collection($countryData);
+        return new CountryResource($country);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateCountryRequest $request, Country $country)
+    public function update(CountryRequest $request, Country $country)
     {
 
         $country->update([
@@ -65,7 +85,12 @@ class CountryController extends Controller
      */
     public function destroy(Country $country)
     {
-        $country->delete();
-        return response("status", 204);
+       if($country->state()->count() > 0){
+        return response('Cannot delete the Country', 400);
+       }else{
+
+           $country->delete();
+           return response("status", 204);
+        }
     }
 }

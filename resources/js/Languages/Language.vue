@@ -7,12 +7,12 @@
                     type="search"
                     placeholder="Search here ..."
                     aria-label="Search"
-                      v-model="searchQuery"
+                    v-model="searchQuery"
                     @input="updateURL"
                 />
             </div>
-            <RouterLink to="/addstate" type="button" class="btn btn-warning">
-                {{$t("Add New States")}}
+            <RouterLink to="/addlanguage" type="button" class="btn btn-warning">
+                {{$t("Add New Language")}}
             </RouterLink>
         </div>
     </div>
@@ -22,7 +22,7 @@
                 <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
-                            <h4 class="card-title">{{$t("All States")}}</h4>
+                            <h4 class="card-title">{{$t("All Languages")}}</h4>
                         </div>
                         <div class="card-body">
                             <div class="table-responsive">
@@ -44,9 +44,9 @@
                                                 ></i>
 
                                             </th>
-
+<th>Code</th>
                                             <th @click="toggleSort('name')">
-                                                <span>{{$t("State")}}</span>
+                                                <span>{{$t("Language")}}</span>
                                                 <i
                                                     v-if="sortField === 'name'"
                                                     class="fa-solid"
@@ -57,31 +57,20 @@
                                                     "
                                                 ></i>
                                             </th>
-                                            <th @click="toggleSort('country_name')">
-                                                <span>{{$t("Country")}}</span>
-                                                <i
-                                                    v-if="sortField === 'country_name'"
-                                                    class="fa-solid"
-                                                    :class="
-                                                        sortDirection === 'DESC'
-                                                            ? 'fa-sort-down'
-                                                            : 'fa-sort-up'
-                                                    "
-                                                ></i>
-                                            </th>                                        </tr>
+                                        </tr>
                                     </thead>
 
                                     <tbody v-if="lists?.data?.length > 0">
                                         <tr v-for="i in lists.data" :key="i.id">
                                             <td>{{ i.id }}</td>
+                                            <td>{{ i.code }}</td>
                                             <td>{{ i.name }}</td>
-                                            <td>{{ i.country.name }}</td>
                                             <td>
                                                 <div class="d-flex flex-row">
                                                     <span class="mx-2">
                                                         <Button
                                                             @click="
-                                                                deleteState(
+                                                                deleteCountry(
                                                                     i.id
                                                                 )
                                                             "
@@ -94,7 +83,7 @@
                                                         <RouterLink
                                                             :to="{
                                                                 path:
-                                                                    '/state/' +
+                                                                    '/country/' +
                                                                     i.id +
                                                                     '/edit',
                                                             }"
@@ -145,20 +134,18 @@ export default {
     data() {
         return {
             name: "",
-            country_id: "",
             search: "",
-            countries: [],
             lists: [],
             temp_id: null,
             isEditting: false,
             Pagination: true,
-            page: 1,
-            Pagination: false,
             sortField: "id",
             sortDirection: "DESC",
             next: "",
             prev: "",
             from: "",
+            page: 1,
+
             to: "",
             total: "",
             searchQuery: this.$route.query.search || "",
@@ -176,7 +163,8 @@ export default {
         "$route.query": {
             handler(newQuery) {
                 this.searchQuery = newQuery.search || "";
-             this.fetchAll();
+
+                this.fetchAll();
             },
             immediate: true,
         },
@@ -208,25 +196,27 @@ export default {
             }
             this.fetchAll();
         },
-        fetchAll(url = null) {
+        async fetchAll(url = null) {
             const params = {
+                // search: this.search,
+
                 search: this.searchQuery,
-                $Pagination: this.Pagination,
                 page: this.page,
                 sortField: this.sortField,
                 sortDirection: this.sortDirection,
             };
-            let fetchUrl = url || "/api/state";
+            let fetchUrl = url || "/api/language";
 
-            axios.get(fetchUrl, { params }).then((res) => {
+            await axios.get(fetchUrl, { params }).then((res) => {
                 (this.lists = res.data), (this.next = this.lists.links.next);
                 this.prev = this.lists.links.prev;
                 this.from = this.lists.meta.from;
                 this.to = this.lists.meta.to;
                 this.total = this.lists.meta.total;
+                console.log(res);
             });
         },
-        deleteState(id) {
+        deleteCountry(id) {
             Swal.fire({
                 title: "Are you sure?",
                 text: "You won't be able to revert this!",
@@ -237,35 +227,36 @@ export default {
                 confirmButtonText: "Yes, delete it!",
             }).then((result) => {
                 if (result.isConfirmed) {
-                    axios.delete(`/api/state/${id}`).then((res) => {
+                    axios
+                        .delete(`/api/language/${id}`)
+                        .then((res) => {
+                            if (res.status === 204) {
+                                Swal.fire({
+                                    timer: 1000,
 
-                        if (res.status === 204) {
+                                    title: "Deleted!",
+                                    text: "Language has been deleted.",
+                                    icon: "success",
+                                });
+                                this.fetchAll();
+                            } else {
+                                Swal.fire({
+                                    title: "Error!",
+                                    text: "Failed to delete Language.",
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .catch((error) => {
                             Swal.fire({
-                                timer: 1000,
+                                timer: 2000,
 
-                                title: "Deleted!",
-                                text: "Your file has been deleted.",
-                                icon: "success",
+                                title: "Error!",
+                                text: "Related data available with this Language",
+                                icon: "error",
                             });
-                            this.fetchAll();
-                        }
-                        else {
-                        Swal.fire({
-                            title: "Error!",
-                            text: "Failed to delete country.",
-                            icon: "error"
+                            console.log(error);
                         });
-                    }
-                    }).catch ((error)=> {
-                        Swal.fire({
-                            timer: 2000,
-
-                        title: "Error!",
-                        text: "Related data available with this City",
-                        icon: "error"
-                    });
-                    console.log(error);
-                 })
                 }
             });
         },

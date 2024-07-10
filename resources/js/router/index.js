@@ -1,71 +1,79 @@
 import { createRouter, createWebHistory } from "vue-router";
-import Country from '../Countries/Country.vue';
-import AddCountry from '../Countries/AddCountry.vue';
-import UpdateCountry from '../Countries/UpdateCountry.vue';
-import State from '../States/State.vue';
-import AddState from '../States/AddState.vue';
-import UpdateState from '../States/UpdateState.vue';
-import City from '../Cities/City.vue';
-import AddCity from '../Cities/AddCity.vue';
-import UpdateCity from '../Cities/UpdateCity.vue';
-import Employee from '../Employees/Employee.vue';
-import AddEmployee from '../Employees/AddEmployee.vue';
-import UpdateEmployee from '../Employees/UpdateEmployee.vue';
+import Country from "../Countries/Country.vue";
+import AddCountry from "../Countries/AddCountry.vue";
+import State from "../States/State.vue";
+import AddState from "../States/AddState.vue";
+import City from "../Cities/City.vue";
+import AddCity from "../Cities/AddCity.vue";
+import Employee from "../Employees/Employee.vue";
+import AddEmployee from "../Employees/AddEmployee.vue";
+import AddLanguage from "../Languages/AddLanguage.vue";
+import Language from "../Languages/Language.vue";
+const routes = [
 
-const routes=[
     {
-        path:'/',
+        path: "/",
 
-        component:Employee
+        component: Employee,
     },
     {
-        path:'/addemployee',
-        component:AddEmployee
+        path: "/addemployee",
+        component: AddEmployee,
     },
     {
-        path:'/employee/:id/edit',
-        component:UpdateEmployee
+        path: "/employee/:id/edit",
+        component: AddEmployee,
     },
     {
-        path:'/country',
-        component:Country
+        path: "/country",
+        component: Country,
     },
     {
-        path:'/addcountry',
-        component:AddCountry
+        path: "/addcountry",
+        component: AddCountry,
     },
     {
-        path:'/country/:id/edit',
-        component:UpdateCountry
+        path: "/country/:id/edit",
+        component: AddCountry,
     },
     {
-        path:'/state',
-        component:State
+        path: "/state",
+        component: State,
     },
     {
-        path:'/addstate',
-        component:AddState
+        path: "/addstate",
+        component: AddState,
     },
     {
-        path:'/state/:id/edit',
-        component:UpdateState
+        path: "/state/:id/edit",
+        component: AddState,
     },
     {
-        path:'/city',
-        component:City
+        path: "/city",
+        component: City,
+    },
+
+    {
+        path: "/addcity",
+        component: AddCity,
+    },
+
+    {
+        path: "/city/:id/edit",
+        component: AddCity,
     },
     {
-        path:'/addcity',
-        component:AddCity
+        path: "/addlanguage",
+        component: AddLanguage,
     },
     {
-        path:'/city/:id/edit',
-        component:UpdateCity
+        path: "/language",
+        component: Language,
     },
-]
-const router=createRouter({
-    history:createWebHistory(),
-    routes
-})
+];
+const router = createRouter({
+    history: createWebHistory(),
+    routes,
+});
 
 export default router;

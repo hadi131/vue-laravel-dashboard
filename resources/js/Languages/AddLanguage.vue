@@ -6,7 +6,7 @@
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
-                        {{ isEditing ? $t("Update Country") :$t( "Add New Country") }}
+                        {{ isEditing ? $t("Update Language") :$t( "Add New Language") }}
                     </div>
                 </div>
                 <div class="card-body">
@@ -17,14 +17,31 @@
                                     value=""
                                     label="Name"
                                     type="text"
-                                    placeholder="Enter Country Name"
+                                    placeholder="Enter Language Name"
                                     name="name"
                                     vmodel="name"
                                     :selectedValue="name"
                                     @some-event="callback"
                                 />
                                 <small class="text-danger">{{
-                                    errorMsg
+                                    errorMsg?.name?.[0]
+                                }}</small>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <Input
+                                    value=""
+                                    label="Code"
+                                    type="text"
+                                    placeholder="Enter Language Code"
+                                    name="code"
+                                    vmodel="code"
+                                    :selectedValue="code"
+                                    @some-event="callback"
+                                />
+                                <small class="text-danger">{{
+                                    errorMsg?.code?.[0]
                                 }}</small>
                             </div>
                         </div>
@@ -60,8 +77,12 @@ import Swal from "sweetalert2";
 export default {
     data() {
         return {
-            errorMsg: "",
+            errorMsg: {
+                name: "",
+                code: "",
+            },
             name: "",
+            code: "",
             search: "",
             lists: [],
             temp_id: null,
@@ -83,21 +104,22 @@ export default {
         callback(modelName, value) {
             this[modelName] = value;
         },
-        getCountryData(id) {
-            axios
-                .get(`/api/country/${id}`)
-                .then((res) => (this.name = res.data.data.name));
-        },
+        // getCountryData(id) {
+        //     axios
+        //         .get(`/api/country/${id}`)
+        //         .then((res) => (this.name = res.data.data.name));
+        // },
         async save() {
             let method = axios.post;
-            let url = "/api/country";
+            let url = "/api/language";
             if (this.isEditing) {
                 method = axios.put;
-                url = `/api/country/${this.temp_id}`;
+                url = `/api/language/${this.temp_id}`;
             }
             try {
                 await method(url, {
                     name: this.name,
+                    code: this.code,
                 }).then((res) => {
                     // this.fetchAll(),
                     const Toast = Swal.mixin({
@@ -118,10 +140,10 @@ export default {
                     this.name = "";
                     this.temp_id = null;
                     this.isEditing = false;
-                    this.$router.push("/country");
+                    this.$router.push("/language");
                 });
             } catch (e) {
-                this.errorMsg = e.response.data.message;
+                this.errorMsg = e.response.data.errors;
             }
         },
     },

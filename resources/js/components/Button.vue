@@ -1,16 +1,13 @@
 <template>
-
     <div class="card-action">
-        <button class="btn" :class="`btn-${color}`">{{ name }}</button>
+        <button class="btn" :class="`btn-${color}`">{{ $t(name) }}</button>
     </div>
-
-
 </template>
 <script>
 export default {
-    props:{
+    props: {
         color: String,
         name: String,
-    }
-}
+    },
+};
 </script>

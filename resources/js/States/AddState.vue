@@ -5,60 +5,61 @@
         <div class="col-md-6">
             <div class="card">
                 <div class="card-header">
-                    <div class="card-title">Add new State</div>
+                    <div class="card-title">
+                        {{ isEditing ? $t("Update State") : $t("Add New State") }}
+                    </div>
                 </div>
                 <div class="card-body">
                     <form v-on:submit.prevent="save">
-
-                    <div class="row">
-                        <div class="col-md-12">
-                            <Input
-                                value=""
-                                label="Name"
-                                type="text"
-                                placeholder="Enter State Name"
-                                name="name"
-                                vmodel="name"
-                                @some-event="callback"
-                            />
-                            <small class="text-danger">{{
-                                errorMsg.name
-                            }}</small>
+                        <div class="row">
+                            <div class="col-md-12">
+                                 <Input
+                                    value=""
+                                    label="Name"
+                                    type="text"
+                                    placeholder="Enter State Name"
+                                    name="name"
+                                    vmodel="name"
+                                    :selectedValue="name"
+                                    @some-event="callback"
+                                />
+                                <small class="text-danger">{{
+                                    errorMsg.name
+                                }}</small>
+                            </div>
                         </div>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-12">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <v-select
+                                    class="mt-2"
+                                    :value="this.countryName"
+                                    v-model="country_id"
+                                    label="name"
+                                    placeholder="Select Country"
+                                    :options="countries"
+                                    @search="fetchAllCountries"
+                                />
 
-
-                            <v-select
-                            class="mt-2"
-                              v-model="country_id"
-                              label="name"
-                              placeholder="Select Country"
-                              :options="countries"
-                              @search="fetchAllCountries"
-                            />
-
-
-                            <small class="text-danger">{{
-                                errorMsg.country_id
-                            }}</small>
+                                <small class="text-danger">{{
+                                    errorMsg.country_id
+                                }}</small>
+                            </div>
                         </div>
-                    </div>
 
-                    <div class="row mt-2">
-                        <div class="d-flex gap-2">
-                            <Button name="Add" color="primary" />
+                        <div class="row mt-2">
+                            <div class="d-flex gap-2">
+                                <Button :name="isEditing ? 'Update' : 'Add'"
+                                :color="isEditing ? 'warning' : 'primary'" />
 
-                            <RouterLink
-                                to="/state"
-                                type="button"
-                                class="btn btn-warning"
-                            >
-                                Back
-                            </RouterLink>
+                                <RouterLink
+                                    to="/state"
+                                    type="button"
+                                    class="btn btn-warning"
+                                >
+                                    {{$t("Back")}}
+                                </RouterLink>
+                            </div>
                         </div>
-                    </div>
                     </form>
                 </div>
             </div>
@@ -86,7 +87,10 @@ export default {
             countries: [],
             lists: [],
             temp_id: null,
-            isEditting: false,
+            isEditing: false,
+            Pagination: false,
+            sortField: "id",
+            sortDirection: "DESC",
         };
     },
     components: {
@@ -95,21 +99,56 @@ export default {
         vSelect,
     },
     mounted() {
-        this.fetchAllCountries();
+        if (this.$route.params.id) {
+
+            this.getStateData(this.$route.params.id);
+            this.temp_id = this.$route.params.id;
+            this.isEditing = true;
+            this.fetchAllCountries()
+        }
+        else{
+            this.fetchAllCountries()
+
+        }
     },
     methods: {
-        fetchAllCountries() {
+        getStateData(id) {
             axios
-                .get("/api/country",{ params: { search: this.search } })
-                .then((res) => (this.countries = res.data));
+                .get(`/api/state/${id}`)
+                .then((res) => {
+                    this.name = res.data.data.name,
+                    this.country_id=res.data.data.country.name
+
+                });
+
+        },
+        fetchAllCountries() {
+            const params = {
+                search: this.search,
+                Pagination: !this.Pagination,
+                sortField: this.sortField,
+                sortDirection: this.sortDirection,
+            };
+            axios
+                .get("/api/country", {
+                    params,
+                })
+                .then((res) => {
+                    this.countries = res.data.data;
+                });
         },
         callback(modelName, value) {
             this[modelName] = value;
         },
         async save() {
+            let method=axios.post;
+            let url = "/api/state";
+            if (this.isEditing) {
+                method = axios.put;
+                url = `/api/state/${this.temp_id}`;
+            }
             try {
-                await axios
-                    .post("/api/state", {
+                await method(url, {
                         name: this.name,
                         country_id: this.country_id.id,
                     })
@@ -128,11 +167,11 @@ export default {
                         });
                         Toast.fire({
                             icon: "success",
-                            title: "Country Added successfully",
+                            title: `State ${this.isEditing ? 'Updated' : 'Added'}  successfully`,
                         });
                         this.name = "";
                         this.temp_id = null;
-                        this.isEditting = false;
+                        this.isEditing = false;
                         this.$router.push("/state");
                     });
             } catch (e) {

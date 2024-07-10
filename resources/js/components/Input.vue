@@ -1,7 +1,7 @@
 <template>
 
     <div class="form-group">
-        <label for="email2">{{label}}</label>
+        <label for="email2">{{$t(label)}}</label>
         <input  :type="type" :name="name" class="form-control" id="email2"
             :placeholder='placeholder' @input="someEvent($event.target.value)" :value="selectedValue" />
     </div>

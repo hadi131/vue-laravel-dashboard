@@ -3,8 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class StoreStateRequest extends FormRequest
+class CountryRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,15 +24,16 @@ class StoreStateRequest extends FormRequest
     {
         return [
 
-            'name'=>'required | unique:states,name',
-            'country_id'=>'required'
-
+            // 'name'=>'required | unique:countries,name',
+            'name' => [
+                'required',
+                Rule::unique('countries', 'name')->ignore($this->route('country')),
+            ],
         ];
     }
     public function messages()
     {
         return [
-            "country_id.required" => ':attribute is required!',
             "name.required" => ':attribute is required!',
             "name.unique" => ':attribute already registered!',
 
@@ -41,8 +43,7 @@ class StoreStateRequest extends FormRequest
     public function attributes()
     {
         return [
-            'name' => 'State Name',
-            'country_id' => 'Country Name',
+            'name' => 'Country Name',
 
         ];
     }

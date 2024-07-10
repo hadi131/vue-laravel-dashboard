@@ -3,8 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class UpdateCountryRequest extends FormRequest
+class LanguageRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -22,24 +23,23 @@ class UpdateCountryRequest extends FormRequest
     public function rules(): array
     {
         return [
-
-            'name' => 'required | unique:states,name,' . $this->country['id'],
-        ];
-    }
-    public function messages()
-    {
-        return [
-            "name.required" => ':attribute is required!',
-            "name.unique" => ':attribute already registered!',
-
+            'name' => [
+                'required',
+                Rule::unique('languages', 'name')->ignore($this->route('language')),
+            ],
+              'code' => [
+                'required',
+                Rule::unique('languages', 'code')->ignore($this->route('language')),
+            ],
 
         ];
     }
+
     public function attributes()
     {
         return [
-            'name' => 'Country Name',
-
+            'name'=>'Language Name',
+            'code'=>'Language Code',
         ];
     }
 }
